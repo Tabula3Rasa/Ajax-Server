@@ -1,0 +1,16 @@
+ 	
+	embedXcode
+	embedXcode+
+	----------------------------------
+	Embedded Computing on Xcode
+	
+	
+	© Rei VILO, 2010-2014
+	All rights reserved	
+	http://embedXcode.weebly.com/
+	
+	
+embedXcode  • Oct 10, 2014 release 212 • Support for DFRobot Wido
+embedXcode+ • Oct 10, 2014 release 213 • Support for Nucleo F401RE on mbed
+	
+	
