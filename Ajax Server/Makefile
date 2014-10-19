@@ -21,10 +21,15 @@
 # List application Arduino/chipKIT/Digispark/Energia/Maple/Microduino/Teensy/Wiring libraries here
 # default = 0 = none
 #
-APP_LIBS_LIST = 0
+# ARDUINO = EEPROM SoftwareSerial SPI Wire SPI Wire Audio 
+#	Bridge Esplora Ethernet Firmata GSM 
+#
+APP_LIBS_LIST = SPI Ethernet SD
 
 # List user's libraries here 
 # default = 0 = none
+#
+
 #
 USER_LIBS_LIST = 0
 
@@ -77,4 +82,5 @@ MAKEFILE_PATH  = $(CURRENT_DIR)/Makefiles
 UTILITIES_PATH = $(CURRENT_DIR)/Utilities
 
 include $(MAKEFILE_PATH)/Step1.mk
+
 
