@@ -99,6 +99,9 @@ void setup()
     server.begin();
     //starting the server.
     
+    Serial.print("server IP is ");
+    Serial.println(Ethernet.localIP());
+    
     
     //load webpage from SD-card
     while (!SD.begin(4)) { //select CS-pin
@@ -245,22 +248,45 @@ void loop()
                         // start sending a standard http response header
                         client.println("HTTP/1.1 200 OK");
                         client.println("Content-Type: text/html");
+                        //client.println("Connection: close");
+                        client.println();
                         
                         if (type == " HTTP"){
                             Serial.println("HTTP command found!");
                             
-                            
+                            /*
                             client.print("Content-Lenght: ");
                             client.println(page.length());
                             client.println("Connection: keep-alive");
-                            client.println();
+                             */
+                            //client.println();
                             
                             // send web page
+                            //Serial.println("webserver return:");
+                            //Serial.print("Page size: ");
+                            //Serial.println(page.length());
                             long f;
+                            for (f=0; f < page.length(); f++) {
+                                client.print(page.substring(f, f+1));
+                            }
+                            
+                            /*
                             for (f = 1; page.length() > sendbuff * f; f++) {
                                 client.print(page.substring((f-1)*sendbuff,f*sendbuff));
+
+                                Serial.print("Sent from ");
+                                Serial.print((f-1)*sendbuff);
+                                Serial.print(" to ");
+                                Serial.println(f*sendbuff-1);
+                                //Serial.println(f);
                             }
-                            client.print(page.substring((f-1)*sendbuff));
+                            client.print(page.substring((f-1) * sendbuff));
+                            //Serial.print(page.substring((f-1) * sendbuff));
+                            
+                            Serial.print("Sent from ");
+                            Serial.println((f-1)*sendbuff);
+                            */
+                             
                             client.println();
                             
                             //Serial.print(page);
