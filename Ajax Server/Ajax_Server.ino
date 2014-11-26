@@ -117,40 +117,6 @@ void setup()
         delay(100);
         //return;
     }
-//    Serial.println("SD initialization done.");
-//    
-//    //open file
-//    File myFile = SD.open(filename, FILE_READ);
-//    
-//    // if the file opened okay, read it:
-//    if (myFile)
-//    {
-//        // read from the file until there's nothing else in it:
-//        while (myFile.available())
-//        {
-//            c = myFile.read();
-//            page.concat(c);
-//        }
-//        Serial.println(page);
-//        myFile.close();
-//        if(myFile.size()==page.length())
-//        {
-//            Serial.println("File loading completed.");
-//        }
-//        else
-//        {
-//            Serial.println("File size error!");
-//            Serial.print("Original size: ");
-//            Serial.println(myFile.size());
-//            Serial.print("Size of read file: ");
-//            Serial.println(page.length());
-//        }
-//    }
-//    else
-//    {
-//        // if the file didn't open, print an error:
-//        Serial.println("Error opening htm-file");
-//    }
 }
 
 
@@ -248,9 +214,11 @@ void loop()
                     String type = "";
                     command.trim();
                     
+                    /*
                     Serial.println("START -- Full command --- START");
                     Serial.print(HTTP_req);
                     Serial.println("");
+                    */
                     
                     Serial.print("Command: ");
                     Serial.println(command);
@@ -288,17 +256,14 @@ void loop()
                             myFile = SD.open(filename, FILE_READ);
                             
                             // if the file opened okay, read it:
-                            if (myFile)
-                            {
+                            if (myFile){
                                 // read from the file until there's nothing else in it:
-                                while (myFile.available())
-                                {
+                                while (myFile.available()){
                                     client.print(char(myFile.read()));
                                 }
                                 myFile.close();
                             }
-                            else
-                            {
+                            else{
                                 myFile.close();
                             }
                              
@@ -362,6 +327,32 @@ void loop()
                             }
                          
                         }
+                        else{
+                            type += HTTP_req.substring(i,i+5);
+                            char filename_temp[type.length()+1];
+                            type.toCharArray(filename_temp, type.length());
+                            
+                            // send file
+                            myFile = SD.open(filename_temp, FILE_READ);
+                            
+                            // if the file opened okay, read it:
+                            if (myFile){
+                                client.println("Connection: keep-alive");
+                                client.println("Content-Type: image/png");
+                                client.println();
+                                // read from the file until there's nothing else in it:
+                                while (myFile.available()){
+                                    client.print(char(myFile.read()));
+                                }
+                                myFile.close();
+                                //Serial.println("File opened!");
+                            }
+                            else{
+                                myFile.close();
+                                //Serial.println("File not opened!");
+                            }
+                        }
+                            
                         
                     }
                     else {
