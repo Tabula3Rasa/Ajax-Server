@@ -29,22 +29,28 @@
 /*
  MODULES:
     Module_ID:
-        01  Brightness Senor
-            A8 = 8
+        00  'Living room' - Temp Sensor
+            A9 = 9
             aget
  
-        02  LED
+        01  'kitchen' - Temp Sensor
+            A10 = 10
+            aget
+        
+        03  empty
+            ?
+            ?
+ 
+        04  LED
             13
             dset
  
-        03  Brightness Sensor
-            A9 = 9
-            aget
+ 
  */
 
-
-String root_table[2][3] = {{"8", "13", "9"},
-    {"aget, dset", "aget"}};
+//{pins} {type}
+String root_table[2][4] = {{"9", "10", "10", "13"},
+    {"aget", "aget", "xxx", "dset"}};
 
 
 uint8_t pinLED;
@@ -119,9 +125,14 @@ void setup()
     }
 }
 
+int getDigital(int mod_id) {
+    int pin;
+    pin = root_table[0][mod_id-1].toInt();
+    
+    return digitalRead(pin);
+}
 
-void setDigital(int mod_id, int state)
-{
+void setDigital(int mod_id, int state) {
     int pin;
     pin = root_table[0][mod_id-1].toInt();
     //Serial.print("Pin to be set: ");
@@ -148,18 +159,24 @@ void setDigital(int mod_id, int state)
     }
 }
 
-int getAnalog(int mod_id)
-{
+void setAnalog(int mod_id, int value){
     int pin;
     pin = root_table[0][mod_id-1].toInt();
     
-    /*
+    analogWrite(pin, value);
+}
+
+int getAnalog(int mod_id) {
+    int pin;
+    pin = root_table[0][mod_id-1].toInt();
+    
+    
     Serial.print("Analog pin number: ");
     Serial.println(pin);
     Serial.print("Analog value: ");
     Serial.println(analogRead(pin));
-    Serial.println("");
-    */
+    Serial.println();
+    
     return analogRead(pin);
 }
 
@@ -212,6 +229,7 @@ void loop()
                     //Ajax request received
                     String command = HTTP_req.substring(0, 4);
                     String type = "";
+                    String extension = "";
                     command.trim();
                     
                     /*
@@ -229,21 +247,28 @@ void loop()
                         i++;
                     }
                     
+                    if(HTTP_req.substring(i,i+1)=="."){
+                        //type += HTTP_req.substring(i,i+5);
+                        extension = HTTP_req.substring(i+1,i+4);
+                    }
+                    
                     Serial.print("Type: ");
                     Serial.println(type);
                     
                     if(command == "GET") {
                         //Serial.println("GET found!");
                         
-                        Serial.println("This is the reply:");
+                        //Serial.println("This is the reply:");
                         // start sending a standard http response header
                         client.println("HTTP/1.1 200 OK");
-                        client.println("Content-Type: text/html");
                         //client.println("Connection: close");
                         //client.println();
                         
                         if (type == " HTTP"){
                             Serial.println("HTTP command found!");
+                            
+                            
+                            client.println("Content-Type: text/html");
                             
                             
                             client.print("Content-Lenght: ");
@@ -266,7 +291,7 @@ void loop()
                             else{
                                 myFile.close();
                             }
-                             
+                               
                             client.println();
                             
                             //Serial.print(page);
@@ -301,25 +326,38 @@ void loop()
                                 
                                 setDigital(module_id, state);
                                 
-                                Serial.println("d_set detected!");
+                                //Serial.println("d_set detected!");
                             }
                             else if(HTTP_type=="d_get"){
                                 //get the state of a digital pin
                                 
-                                Serial.println("d_get detected!");
+                                client.print(getDigital(module_id));
+                                
+                                //Serial.println("d_get detected!");
                             }
                             else if(HTTP_type=="a_get"){
                                 //get the value of an analog pin
                                 
                                 client.print(getAnalog(module_id)/10.24);
-                                client.println(";77");
+                                //client.println(";77");
                                 
-                                Serial.println("a_get detected!");
+                                //Serial.println("a_get detected!");
                             }
                             else if(HTTP_type=="a_set"){
                                 //set the value of an analog pin
+                                int value = 0;
+                                String str_value;
+                                i = 0;
                                 
-                                Serial.println("a_set detected!");
+                                while (HTTP_req.substring(HTTP_start+27+i,HTTP_start+27+i+1) != " ") {
+                                    str_value += HTTP_req.substring(HTTP_start+27+i,HTTP_start+27+i+1);
+                                    i++;
+                                }
+                                value = str_value.toInt();
+                                
+                                setAnalog(module_id, value);
+                                
+                                //Serial.println("a_set detected!");
                             }
                             else{
                                 Serial.print("HTTP-request Error: type = ");
@@ -328,8 +366,27 @@ void loop()
                          
                         }
                         else{
-                            type += HTTP_req.substring(i,i+5);
+                            String header = "";
+                            if(extension=="png"){
+                                Serial.println("PNG");
+                                header = "Connection: keep-alive\nContent-Type: image/png\n";
+                            }
+                            else if(extension=="jpg"){
+                                Serial.println("JPG");
+                                header = "Connection: keep-alive\nContent-Type: image/jpg\n";
+                            }
+                            else if (extension == "css"){
+                                Serial.println("CSS");
+                                header = "Connection: keep-alive\nContent-Type: text/css\n";
+                            }
+                            else{
+                                header = "Connection: keep-alive\n";
+                                
+                                Serial.println("ERROR: extension not known!");
+                            }
+                            
                             char filename_temp[type.length()+1];
+                            type += HTTP_req.substring(i,i+5);
                             type.toCharArray(filename_temp, type.length());
                             
                             // send file
@@ -337,9 +394,7 @@ void loop()
                             
                             // if the file opened okay, read it:
                             if (myFile){
-                                client.println("Connection: keep-alive");
-                                client.println("Content-Type: image/png");
-                                client.println();
+                                client.println(header);
                                 // read from the file until there's nothing else in it:
                                 while (myFile.available()){
                                     client.print(char(myFile.read()));
@@ -349,7 +404,7 @@ void loop()
                             }
                             else{
                                 myFile.close();
-                                //Serial.println("File not opened!");
+                                Serial.println("ERROR: File not opened!");
                             }
                         }
                             
@@ -365,10 +420,10 @@ void loop()
                     
                     // display received HTTP request on serial port
                     
-                    Serial.println();
-                    Serial.println("This is the request:");
-                    Serial.print(HTTP_req);
-                    Serial.println();
+//                    Serial.println();
+//                    Serial.println("This is the request:");
+//                    Serial.print(HTTP_req);
+//                    Serial.println();
                     
                     HTTP_req = "";            // finished with request, empty string
                     type = "";
