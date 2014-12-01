@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>D975669B-2462-4FE8-A51A-1AAEA233B898</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Ajax Server</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>E4BA544755A839727FD85418949AFC694DC5B4B1</key>
+		<string>https://github.com/Tabula3Rasa/Ajax-Server.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>Ajax Server.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>E4BA544755A839727FD85418949AFC694DC5B4B1</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/Tabula3Rasa/Ajax-Server.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>E4BA544755A839727FD85418949AFC694DC5B4B1</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>E4BA544755A839727FD85418949AFC694DC5B4B1</string>
+			<key>IDESourceControlWCCName</key>
+			<string>Ajax%20Server</string>
+		</dict>
+	</array>
+</dict>
+</plist>
