@@ -1,0 +1,102 @@
+<html>
+  <head>
+        
+  </head>
+  <body style="position:absolute; height:400px;">
+            <h1>Light indicator</h1>
+      <div id="content" style="width: 50%; margin: 0 auto;">
+         <div id="chart_div" style="width: 120px; height: 120px; margin: 0 auto;"></div>
+          <button id="LED" style="height: 50px; width:100px;" onclick="switchLED('02')">LED</button>
+      </div>
+      <div id="debug" style="display:inline;"></div>
+    <div id="footer" style="position:absolute; bottom: 0; text-align:center; width: 100%; padding:10px; background-color:black; color: white;">made by Gihad &amp; Phips Solutions</div>
+  </body>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["gauge"]});
+      google.setOnLoadCallback(drawChart);
+        
+        //MODUL_IDs:
+        //01:   Photovoltaik Cell
+        //02:   LED_1
+        
+
+        var val = 0;
+        var led = false;
+        
+        var options = {
+          width: 400, height: 120,
+          redFrom: 90, redTo: 100,
+          yellowFrom:75, yellowTo: 90,
+          minorTicks: 5
+        };
+             
+        //drawChart is called every 50 ms (see setTimeout..)
+        function drawChart() {
+            
+            var xmlhttp;
+
+            xmlhttp=new XMLHttpRequest();
+            
+            xmlhttp.onreadystatechange=function()
+              {
+              if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                    val = parseInt(xmlhttp.responseText);
+
+                    var data = google.visualization.arrayToDataTable([
+                      ['Label', 'Value'],
+                      ['Brightness', val],
+                    ]);
+                   var chart = new google.visualization.Gauge(document.getElementById('chart_div'));
+                   chart.draw(data, options);
+
+                }
+              }
+            //xmlhttp.open("GET","ajax;a_get;M_ID=01",true);
+            xmlhttp.open("GET","brightness.txt",true);
+            xmlhttp.send();
+            
+        
+            setTimeout("drawChart()",50);
+
+      }
+    
+      //switch led is called by clicking the button with id= LED
+      function switchLED(modul_id)
+      {
+            led = !led;
+            
+            var led_status = "0";
+           if(led)
+            {
+                document.getElementById("LED").innerHTML = "LED OFF"; 
+                led_status = "1";
+            }
+            else
+            {
+                document.getElementById("LED").innerHTML = "LED ON";
+                led_status = "0";
+            }
+
+            var xmlhttp;
+
+            xmlhttp=new XMLHttpRequest();
+            
+            xmlhttp.onreadystatechange=function()
+              {
+              if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                    document.getElementById("debug").innerHTML = xmlhttp.responseText;
+
+                }
+              }
+            //xmlhttp.open("GET","ajax;d_set;" + "M_ID=" + modul_id + ";STAT=" + led_status,true);
+            xmlhttp.open("GET","light.txt",true);
+            xmlhttp.send();
+                       
+      }
+      
+   
+    </script>
+</html>

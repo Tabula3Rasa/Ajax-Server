@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!-- 
+  Design by predic8 GmbH
+  http://www.predic8.de
+  Released for free under a Creative Commons Attribution 2.5 License
+-->
+
+<html>
+  <head>
+    <meta name="viewport" content="user-scalable=no, width=device-width, height=device-height"/>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="stylesheet" type="text/css" href="iphone.css" media="screen"/>
+  </head>
+  <body onload="onLoad()">
+     
+    <div>
+      <h1>Home Automation</h1>
+      <h2>Statistics</h2>
+      <ul>
+        <li>Living Room<span id="temp_livingroom" class="right">23&deg;</span></li>
+        <li>Kitchen<span id="temp_kitchen" class="right">21&deg;</span></li>
+        <a href="stat.htm"><li class="arrow">more ...</li></a>
+      </ul>
+        
+      <h2>Controls</h2>
+      <ul>
+        <li>LED 1<span class="right"><div><input id="LED-switch" class="switch" type="checkbox" name="LED" value="1" onchange="toggleLED(value)"></div></span>
+          </li>
+        <li>DIMMER 1<span class="right"><div style="width:160px"><input style="float:left;" id="LED-slider" type="range" value="0" min="0" max="100" onchange="showValue('LED',this.value)"/><span id="LED"></span></div></span>
+            
+          </li>
+          <li>DIMMER 2<span class="right"><div style="width:160px"><input style="float:left;" id="LED-slider" type="range" value="0" min="0" max="100" onchange="showValue('LED',this.value)"/><span id="LED"></span></div></span>
+            
+          </li>
+      </ul>
+        <p id="debug">This software is under construction. Please be patient ... ;-)</p>
+    </div>
+
+
+  </body>
+        <script>
+         var counter = 0;
+        var xmlhttp = [new XMLHttpRequest(),new XMLHttpRequest()];
+            
+        function onLoad()
+        {
+            getModule(0,function(){
+                if (xmlhttp[0].readyState==4 && xmlhttp[0].status==200)
+                {
+                    document.getElementById("temp_livingroom").innerHTML = xmlhttp[0].responseText + "&deg";
+
+                } 
+            });
+            
+            getModule(1,function(){
+                if (xmlhttp[1].readyState==4 && xmlhttp[1].status==200)
+                {
+                    document.getElementById("temp_kitchen").innerHTML = xmlhttp[1].responseText + "&deg";
+
+                } 
+            });
+            //document.getElementById("LED-switch").setAttribute("checked","checked");
+            
+            setTimeout(onLoad,200);
+
+        }
+
+            
+        function showValue(id, newValue)
+        {
+           document.getElementById(id).innerHTML=newValue;
+        } 
+        
+      function toggleLED(value)
+      {
+        if(value == "1")
+        {
+            setModule("04","0");
+            //document.getElementById("debug").innerHTML = value;
+            document.getElementById("LED-switch").setAttribute("value","0");
+        }
+        else
+        {
+            setModule("04","1");
+            //document.getElementById("debug").innerHTML = value;
+            document.getElementById("LED-switch").setAttribute("value","1");            
+        }
+        
+        
+
+      }
+       function getModule(mID,cfunc)
+      {             
+            //xmlhttp=new XMLHttpRequest();        
+            xmlhttp[mID].onreadystatechange=cfunc;
+            var text = "ajax.php?a_get&" + "M_ID=" + mID;
+            xmlhttp[mID].open("GET",text,true);
+            xmlhttp[mID].send();  
+      }       
+      function setModule(mID,value)
+      {
+            var xmlhttp;
+
+            xmlhttp=new XMLHttpRequest();
+            
+            xmlhttp.onreadystatechange=function()
+              {
+              if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                    document.getElementById("debug").innerHTML = xmlhttp.responseText;
+
+                }
+              }
+            xmlhttp.open("GET","ajax.php?d_set&" + "M_ID=" + mID + "&STAT=" + value,true);
+            xmlhttp.send();
+      }
+                
+        
+    </script>
+</html>
+         

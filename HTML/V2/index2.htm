@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["gauge"]});
+      google.setOnLoadCallback(drawChart);
+
+        var val = 0;
+        
+        var options = {
+          width: 400, height: 120,
+          redFrom: 90, redTo: 100,
+          yellowFrom:75, yellowTo: 90,
+          minorTicks: 5
+        };
+             
+        function drawChart() {
+            
+            var xmlhttp;
+
+            xmlhttp=new XMLHttpRequest();
+            
+            xmlhttp.onreadystatechange=function()
+              {
+              if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                    val = parseInt(xmlhttp.responseText);
+
+                    var data = google.visualization.arrayToDataTable([
+                      ['Label', 'Value'],
+                      ['Brightness', val],
+                    ]);
+                   var chart = new google.visualization.Gauge(document.getElementById('chart_div'));
+                   chart.draw(data, options);
+
+                }
+              }
+            xmlhttp.open("GET","light.txt",true);
+            xmlhttp.send();
+            
+        
+            setTimeout("drawChart()",50);
+
+      }
+   
+    </script>
+  </head>
+  <body>
+      <div id="test"></div>
+      <h1>Light indicator</h1>
+    <div id="chart_div" style="width: 400px; height: 120px;"></div>
+  </body>
+</html>

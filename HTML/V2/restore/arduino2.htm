@@ -1,0 +1,136 @@
+<html>
+  <head>
+    <title>Home Automation - Statistics</title>
+  </head>
+  <body style="position:absolute; width=100%; height:100%;">
+<form id="upload-form" style=" border:1px solid; padding:5px; position:fixed; top:5px; right:5px;" action="upload.php" method="post" enctype="multipart/form-data">
+  Please choose a file: <input type="file" name="uploadFile"><br>
+  <input type="submit" value="Upload File">
+</form>
+    
+      <div id="content" style="width: 80%; margin: 0 auto;">
+          <h1>Statistics</h1>
+         <div id="chart_div" style="width: 120px; height: 120px; margin: 0 auto;"></div>
+            <div id="linechart_div" style="width: 500px; height: 300px; margin: 0 auto;"></div>
+               
+         <h1>Control</h1>
+           <button id="LED" style="height: 50px; width:100px;" onclick="switchLED('02')">LED</button>
+      </div>
+         
+      <div id="debug" style="display:inline;"></div>
+    <div id="footer" style="position:absolute; bottom: 0; text-align:center; width: 100%; padding:10px; background-color:black; color: white;">made by Gihad &amp; Phips Solutions</div>
+      
+  </body>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        
+      google.load("visualization", "1", {packages:["gauge"]});
+    google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+        
+        
+        //MODUL_IDs:
+        //01:   Photovoltaik Cell
+        //02:   LED_1
+        
+
+        var led = false;
+        
+        var options = {
+          width: 400, height: 120,
+          redFrom: 90, redTo: 100,
+          yellowFrom:75, yellowTo: 90,
+          minorTicks: 5
+        };
+        
+        var counter = 0.0;
+             
+        //drawChart is called every 50 ms (see setTimeout..)
+        function drawChart() {
+            counter += 0.1;
+               var data_package = [
+          ['Time', 'Temp'],[2,2],
+        ];
+            var test = [counter, Math.sin(counter)];
+            
+            data_package.concat(test);
+            
+             var data_line = google.visualization.arrayToDataTable(data_package);
+
+        var options_line = {
+          title: 'Temperature Living Room'
+        };
+
+        var chart_line = new google.visualization.LineChart(document.getElementById('linechart_div'));
+
+        chart_line.draw(data_line, options_line);
+            
+            var xmlhttp;
+
+            xmlhttp=new XMLHttpRequest();
+            
+            xmlhttp.onreadystatechange=function()
+              {
+              if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                    var response = xmlhttp.responseText;
+                    
+                    var val = response.split(";");
+                    var light1 = parseFloat(val[0]);
+                    var light2 = parseFloat(val[1]);
+                    
+                    var data = google.visualization.arrayToDataTable([
+                      ['Label', 'Value'],
+                      ['Brightness', light1],
+                      ['Brightness', light2],
+                    ]);
+                   var chart = new google.visualization.Gauge(document.getElementById('chart_div'));
+                   chart.draw(data, options);
+
+                }
+              }
+            xmlhttp.open("GET","ajax.php?a_get&M_ID=01",true);
+            xmlhttp.send();
+            
+        
+            setTimeout("drawChart()",200);
+
+      }
+    
+      //switch led is called by clicking the button with id= LED
+      function switchLED(modul_id)
+      {
+            led = !led;
+            
+            var led_status = "0";
+           if(led)
+            {
+                document.getElementById("LED").innerHTML = "LED OFF"; 
+                led_status = "1";
+            }
+            else
+            {
+                document.getElementById("LED").innerHTML = "LED ON";
+                led_status = "0";
+            }
+
+            var xmlhttp;
+
+            xmlhttp=new XMLHttpRequest();
+            
+            xmlhttp.onreadystatechange=function()
+              {
+              if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                    document.getElementById("debug").innerHTML = xmlhttp.responseText;
+
+                }
+              }
+            xmlhttp.open("GET","ajax.php?d_set&" + "M_ID=" + modul_id + "&STAT=" + led_status,true);
+            xmlhttp.send();
+                       
+      }
+      
+   
+    </script>
+</html>
