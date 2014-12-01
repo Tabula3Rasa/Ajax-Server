@@ -43,8 +43,8 @@
  */
 
 
-String root_table[2][3] = {{"8", "13", "9"},
-    {"aget, dset", "aget"}};
+String root_table[2][4] = {{"9", "10", "13", "13"},
+    {"aget", "aget", "dset", "aget"}};
 
 
 uint8_t pinLED;
@@ -185,7 +185,7 @@ void setDigital(int mod_id, int state)
 int getAnalog(int mod_id)
 {
     int pin;
-    pin = root_table[0][mod_id-1].toInt();
+    pin = root_table[0][mod_id].toInt();
     
     /*
     Serial.print("Analog pin number: ");
@@ -270,19 +270,14 @@ void loop()
                         Serial.println("This is the reply:");
                         // start sending a standard http response header
                         client.println("HTTP/1.1 200 OK");
-                        client.println("Content-Type: text/html");
                         //client.println("Connection: close");
                         //client.println();
                         
                         if (type == " HTTP"){
                             Serial.println("HTTP command found!");
                             
-                            
-                            client.print("Content-Lenght: ");
-                            client.println(page.length());
+                            client.println("Content-Type: text/html");
                             client.println("Connection: keep-alive");
-                            
-                            client.println();
                             
                             // send web page
                             myFile = SD.open(filename, FILE_READ);
@@ -290,6 +285,12 @@ void loop()
                             // if the file opened okay, read it:
                             if (myFile)
                             {
+                                client.print("Content-Length: ");
+                                client.println(myFile.size());
+                                client.println("6341");
+                                client.println();
+                                client.println();
+                                
                                 // read from the file until there's nothing else in it:
                                 while (myFile.available())
                                 {
@@ -311,10 +312,9 @@ void loop()
                         else if(type == "ajax") {
                             Serial.println("AJAX command found!");
 
-                            //client.print("Content-Lenght: ");
                             //client.println(page.length());
-                            client.println("Connection: keep-alive");
-                            client.println();
+                            //client.println("Connection: keep-alive");
+                            //client.println();
                             
                             int HTTP_start = HTTP_req.indexOf("ajax");
                             String HTTP_type = HTTP_req.substring(HTTP_start + 9, HTTP_start + 14);
@@ -340,14 +340,28 @@ void loop()
                             }
                             else if(HTTP_type=="d_get"){
                                 //get the state of a digital pin
+                                client.println("Content-Type: text/html");
+                                client.println();
+                                client.println();
                                 
                                 Serial.println("d_get detected!");
                             }
                             else if(HTTP_type=="a_get"){
                                 //get the value of an analog pin
+                                float temp_value = getAnalog(module_id);
                                 
-                                client.print(getAnalog(module_id)/10.24);
-                                client.println(";77");
+                                client.print("Content-Length: ");
+                                client.println(sizeof(temp_value/10.24));
+                                client.println("Content-Type: text/html");
+                                client.println();
+                                client.println();
+                                
+                                client.print(temp_value/10.24);
+                                Serial.println();
+                                Serial.println("Response:");
+                                Serial.println(temp_value/10.24);
+                                Serial.println();
+                                //client.println(";77");
                                 
                                 Serial.println("a_get detected!");
                             }
@@ -362,6 +376,36 @@ void loop()
                             }
                          
                         }
+                        else{
+                            type += HTTP_req.substring(i,i+5);
+                            char filename_temp[type.length()+1];
+                            type.toCharArray(filename_temp, type.length());
+                            
+                            // send file
+                            myFile = SD.open(filename_temp, FILE_READ);
+                            
+                            // if the file opened okay, read it:
+                            if (myFile){
+                                client.println("Connection: keep-alive");
+                                client.println("Content-Type: image/png");
+                                client.print("Content-Length: ");
+                                client.print(myFile.size());
+                                client.println();
+                                client.println();
+                                
+                                // read from the file until there's nothing else in it:
+                                while (myFile.available()){
+                                    client.print(char(myFile.read()));
+                                }
+                                myFile.close();
+                                //Serial.println("File opened!");
+                            }
+                            else{
+                                myFile.close();
+                                //Serial.println("File not opened!");
+                            }
+                        }
+                        
                         
                     }
                     else {
@@ -373,16 +417,18 @@ void loop()
                     
                     
                     // display received HTTP request on serial port
-                    
+                    /*
                     Serial.println();
                     Serial.println("This is the request:");
                     Serial.print(HTTP_req);
                     Serial.println();
+                    */
                     
                     HTTP_req = "";            // finished with request, empty string
                     type = "";
                     command = "";
                     
+                    //Serial.println();
                     break;
                 }
                 
