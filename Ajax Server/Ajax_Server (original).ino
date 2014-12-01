@@ -29,22 +29,28 @@
 /*
  MODULES:
     Module_ID:
-        01  Brightness Senor
-            A8 = 8
+        00  'Living room' - Temp Sensor
+            A9 = 9
             aget
  
-        02  LED
+        01  'kitchen' - Temp Sensor
+            A10 = 10
+            aget
+        
+        03  empty
+            ?
+            ?
+ 
+        04  LED
             13
             dset
  
-        03  Brightness Sensor
-            A9 = 9
-            aget
+ 
  */
 
-
-String root_table[2][4] = {{"9", "10", "13", "13"},
-    {"aget", "aget", "dset", "aget"}};
+//{pins} {type}
+String root_table[2][4] = {{"9", "10", "10", "13"},
+    {"aget", "aget", "xxx", "dset"}};
 
 
 uint8_t pinLED;
@@ -119,40 +125,38 @@ void setup()
     }
 }
 
-
-void setDigital(int mod_id, int state){
-    int pin;
-    pin = root_table[0][mod_id].toInt();
-    
-    if (state)
-    {
-        digitalWrite(pin, HIGH);
-    }
-    else
-    {
-        digitalWrite(pin, LOW);
-    }
-}
-
-boolean getDigital(int mod_id) {
+int getDigital(int mod_id) {
     int pin;
     pin = root_table[0][mod_id-1].toInt();
     
     return digitalRead(pin);
 }
 
-int getAnalog(int mod_id){
+void setDigital(int mod_id, int state) {
     int pin;
-    pin = root_table[0][mod_id].toInt();
+    pin = root_table[0][mod_id-1].toInt();
+    //Serial.print("Pin to be set: ");
+    //Serial.println(pin);
     
-    /*
-    Serial.print("Analog pin number: ");
-    Serial.println(pin);
-    Serial.print("Analog value: ");
-    Serial.println(analogRead(pin));
-    Serial.println("");
-    */
-    return analogRead(pin);
+    if (state)
+    {
+        digitalWrite(pin, HIGH);
+        
+        Serial.print("Digital pin ");
+        Serial.print(mod_id);
+        Serial.println(" set to HIGH");
+        
+    }
+    else
+    {
+        digitalWrite(pin, LOW);
+        
+        
+        Serial.print("Digital pin ");
+        Serial.print(mod_id);
+        Serial.println(" set to LOW");
+        
+    }
 }
 
 void setAnalog(int mod_id, int value){
@@ -160,6 +164,20 @@ void setAnalog(int mod_id, int value){
     pin = root_table[0][mod_id-1].toInt();
     
     analogWrite(pin, value);
+}
+
+int getAnalog(int mod_id) {
+    int pin;
+    pin = root_table[0][mod_id-1].toInt();
+    
+    
+    Serial.print("Analog pin number: ");
+    Serial.println(pin);
+    Serial.print("Analog value: ");
+    Serial.println(analogRead(pin));
+    Serial.println();
+    
+    return analogRead(pin);
 }
 
 // this function will return the number of bytes currently free in RAM
@@ -218,15 +236,20 @@ void loop()
                     Serial.println("START -- Full command --- START");
                     Serial.print(HTTP_req);
                     Serial.println("");
+                    */
                     
                     Serial.print("Command: ");
                     Serial.println(command);
-                    */
-                     
+                    
                     int i = command.length() + 2;
                     while (HTTP_req.substring(i,i+1) != "." && HTTP_req.substring(i,i+1) != "/") {
                         type += HTTP_req.substring(i,i+1);
                         i++;
+                    }
+                    
+                    if(HTTP_req.substring(i,i+1)=="."){
+                        //type += HTTP_req.substring(i,i+5);
+                        extension = HTTP_req.substring(i+1,i+4);
                     }
                     
                     Serial.print("Type: ");
@@ -236,38 +259,34 @@ void loop()
                         //Serial.println("GET found!");
                         
                         //Serial.println("This is the reply:");
-                        
                         // start sending a standard http response header
                         client.println("HTTP/1.1 200 OK");
-
+                        client.println("Content-Type: text/html");
+                        //client.println("Connection: close");
+                        //client.println();
                         
                         if (type == " HTTP"){
-                            //Serial.println("HTTP command found!");
+                            Serial.println("HTTP command found!");
                             
-                            client.println("Content-Type: text/html");
+                            
+                            client.print("Content-Lenght: ");
+                            client.println(page.length());
                             client.println("Connection: keep-alive");
+                            
+                            client.println();
                             
                             // send web page
                             myFile = SD.open(filename, FILE_READ);
                             
                             // if the file opened okay, read it:
-                            if (myFile)
-                            {
-                                client.print("Content-Length: ");
-                                client.println(myFile.size());
-                                client.println("6341");
-                                client.println();
-                                client.println();
-                                
+                            if (myFile){
                                 // read from the file until there's nothing else in it:
-                                while (myFile.available())
-                                {
+                                while (myFile.available()){
                                     client.print(char(myFile.read()));
                                 }
                                 myFile.close();
                             }
-                            else
-                            {
+                            else{
                                 myFile.close();
                             }
                              
@@ -279,64 +298,64 @@ void loop()
                         }
                         else if(type == "ajax") {
                             //Serial.println("AJAX command found!");
+
+                            //client.print("Content-Lenght: ");
+                            //client.println(page.length());
+                            client.println("Connection: keep-alive");
+                            client.println();
                             
                             int HTTP_start = HTTP_req.indexOf("ajax");
                             String HTTP_type = HTTP_req.substring(HTTP_start + 9, HTTP_start + 14);
                             int module_id = HTTP_req.substring(HTTP_start + 20, HTTP_start + 22).toInt();
                             
-                            /*
+                            
                             Serial.print("HTTP_type: ");
                             Serial.println(HTTP_type);
                             Serial.print("Module: ");
                             Serial.println(module_id);
-                            */
+                            
                             
                             if (HTTP_type=="d_set"){
                                 //set a digital pin
                                 int state = HTTP_req.substring(HTTP_start + 28, HTTP_start + 29).toInt();
                                 
-                                //Serial.print("New State: ");
-                                //Serial.println(state);
+                                Serial.print("New State: ");
+                                Serial.println(state);
                                 
                                 setDigital(module_id, state);
                                 
                                 //Serial.println("d_set detected!");
                             }
                             else if(HTTP_type=="d_get"){
-                                client.println("Content-Type: text/html");
-                                client.println();
-                                client.println();
-                                
                                 //get the state of a digital pin
-                                client.println(getDigital(module_id));
+                                
+                                client.print(getDigital(module_id));
                                 
                                 //Serial.println("d_get detected!");
                             }
                             else if(HTTP_type=="a_get"){
                                 //get the value of an analog pin
-                                float temp_value = getAnalog(module_id/10.24);
                                 
-                                //client.print("Content-Length: ");
-                                //client.println(sizeof(temp_value/10.24));
-                                client.println("Content-Type: text/html");
-                                client.println();
-                                client.println();
+                                client.print(getAnalog(module_id)/10.24);
+                                //client.println(";77");
                                 
-                                /*
-                                client.print(temp_value/10.24);
-                                Serial.println();
-                                Serial.println("Response:");
-                                Serial.println(temp_value/10.24);
-                                Serial.println();
-                                
-                                Serial.println("a_get detected!");
-                                 */
+                                //Serial.println("a_get detected!");
                             }
                             else if(HTTP_type=="a_set"){
                                 //set the value of an analog pin
-
+                                int value = 0;
+                                String str_value;
+                                i = 0;
                                 
-                                Serial.println("a_set detected!");
+                                while (HTTP_req.substring(HTTP_start+27+i,HTTP_start+27+i+1) != " ") {
+                                    str_value += HTTP_req.substring(HTTP_start+27+i,HTTP_start+27+i+1);
+                                    i++;
+                                }
+                                value = str_value.toInt();
+                                
+                                setAnalog(module_id, value);
+                                
+                                //Serial.println("a_set detected!");
                             }
                             else{
                                 Serial.print("HTTP-request Error: type = ");
@@ -345,34 +364,6 @@ void loop()
                          
                         }
                         else{
-                            type += HTTP_req.substring(i,i+5);
-                            char filename_temp[type.length()+1];
-                            type.toCharArray(filename_temp, type.length());
-                            
-                            // send file
-                            myFile = SD.open(filename_temp, FILE_READ);
-                            
-                            // if the file opened okay, read it:
-                            if (myFile){
-                                client.println("Connection: keep-alive");
-                                client.println("Content-Type: image/png");
-                                client.print("Content-Length: ");
-                                client.print(myFile.size());
-                                client.println();
-                                client.println();
-                                
-                                // read from the file until there's nothing else in it:
-                                while (myFile.available()){
-                                    client.print(char(myFile.read()));
-                                }
-                                myFile.close();
-                                //Serial.println("File opened!");
-                            }
-                            else{
-                                myFile.close();
-                                //Serial.println("File not opened!");
-                            }
-                            //---------------
                             String header = "";
                             if(extension=="png"){
                                 header = "Connection: keep-alive\nContent-Type: image/png\n";
@@ -411,9 +402,8 @@ void loop()
                                 Serial.println("ERROR: File not opened!");
                             }
                             client.println();
-                            
                         }
-                        
+                            
                         
                     }
                     else {
@@ -425,18 +415,16 @@ void loop()
                     
                     
                     // display received HTTP request on serial port
-                    /*
-                    Serial.println();
-                    Serial.println("This is the request:");
-                    Serial.print(HTTP_req);
-                    Serial.println();
-                    */
+                    
+//                    Serial.println();
+//                    Serial.println("This is the request:");
+//                    Serial.print(HTTP_req);
+//                    Serial.println();
                     
                     HTTP_req = "";            // finished with request, empty string
                     type = "";
                     command = "";
                     
-                    //Serial.println();
                     break;
                 }
                 
