@@ -48,9 +48,9 @@
  
  */
 
-//{pins} {type}
-String root_table[2][5] = {{"9", "10", "13", "13", "13"},
-    {"aget", "aget", "xxx", "xxx", "dset"}};
+//{pins} {type} {factor}
+String root_table[3][5] = {{"9", "10", "13", "13", "13"},
+    {"aget", "aget", "xxx", "xxx", "dset"}, {"10.24", "7.245", "1", "1"}};
 
 
 uint8_t pinLED;
@@ -68,7 +68,9 @@ EthernetServer server(80);
 // (port 80 is default for HTTP).
 
 String HTTP_req = "";
-String page;
+String command;
+String type = "";
+String extension = "";
 char c;
 char b;
 String file_read = "";
@@ -152,16 +154,24 @@ boolean getDigital(int mod_id) {
 
 int getAnalog(int mod_id){
     int pin;
+    float fac;
+    char temp_char[8];
     pin = root_table[0][mod_id].toInt();
+    root_table[2][mod_id].toCharArray(temp_char, root_table[2][mod_id].length() + 1);
+    fac = atof(temp_char);
     
     /*
+    Serial.print("Analog read factor: ");
+    Serial.println(fac);
+    Serial.println();
+    
     Serial.print("Analog pin number: ");
     Serial.println(pin);
     Serial.print("Analog value: ");
     Serial.println(analogRead(pin));
     Serial.println();
     */
-    return analogRead(pin);
+    return analogRead(pin)/fac;
 }
 
 void setAnalog(int mod_id, int value){
@@ -217,46 +227,50 @@ void loop()
                 // so you can send a reply
                 if(c == '\n' && currentLineIsBlank)
                 {
-                    //Ajax request received
-                    String command = HTTP_req.substring(0, 4);
-                    String type = "";
-                    String extension = "";
-                    command.trim();
+                    int i = 0;
+                    while (HTTP_req.substring(i, i+1) != " ") {
+                        command += HTTP_req.substring(i, i+1);
+                        i++;
+                    }
                     
+                    i++;
+                    i++;
+                    /*
+                    Serial.print("Command: ");
+                    Serial.println(command);
+                    */
                     /*
                     Serial.println("START -- Full command --- START");
                     Serial.print(HTTP_req);
                     Serial.println("");
-                    
-                    Serial.print("Command: ");
-                    Serial.println(command);
                     */
                     
-                    int i = command.length() + 2;
-                    while (HTTP_req.substring(i,i+1) != "." && HTTP_req.substring(i,i+1) != "/") {
+                    //int i = command.length() + 2;
+                    while (HTTP_req.substring(i,i+1) != "." && HTTP_req.substring(i,i+1) != " ") {
                         type += HTTP_req.substring(i,i+1);
                         i++;
                     }
+                    /*
+                    Serial.print("Type: ");
+                    Serial.println(type);
+                    */
                     
                     if(HTTP_req.substring(i,i+1)=="."){
                         extension = HTTP_req.substring(i+1,i+4);
+                        /*
+                        Serial.print("Extension: ");
+                        Serial.println(extension);
+                        */
                     }
-                    
-                    //Serial.print("Type: ");
-                    //Serial.println(type);
                     
                     if(command == "GET") {
                         //Serial.println("GET found!");
-                        
-                        //Serial.println("This is the reply:");
-                        
                         // start sending a standard http response header
                         client.println("HTTP/1.1 200 OK");
 
                         
-                        if (type == " HTTP"){
+                        if (type == ""){
                             //Serial.println("HTTP command found!");
-                            
                             
                             client.println("Content-Type: text/html");
                             client.println("Connection: keep-alive");
@@ -268,7 +282,6 @@ void loop()
                             if (myFile){
                                 client.print("Content-Length: ");
                                 client.println(myFile.size());
-                                client.println("6341");
                                 client.println();
                                 client.println();
                                 // read from the file until there's nothing else in it:
@@ -282,16 +295,10 @@ void loop()
                             }
                             
                             client.println();
-                            
-                            //Serial.print(page);
-                            
-                            
                         }
                         else if(type == "ajax") {
                             //Serial.println("AJAX command found!");
-                            
-                            //client.print("Content-Lenght: ");
-                            //client.println(page.length());
+
                             client.println("Connection: keep-alive");
                             //client.println();
                             
@@ -329,10 +336,10 @@ void loop()
                             }
                             else if(HTTP_type=="a_get"){
                                 //get the value of an analog pin
-                                float temp_value = getAnalog(module_id)/10.24;
+                                float temp_value = getAnalog(module_id);
                                 
                                 //client.print("Content-Length: ");
-                                //client.println(sizeof(temp_value/10.24));
+                                //client.println(sizeof(temp_value));
                                 client.println("Content-Type: text/html");
                                 client.println();
                                 client.println();
@@ -415,15 +422,16 @@ void loop()
                     
                     
                     // display received HTTP request on serial port
-                    
-                    //                    Serial.println();
-                    //                    Serial.println("This is the request:");
-                    //                    Serial.print(HTTP_req);
-                    //                    Serial.println();
-                    
+                    /*
+                    Serial.println();
+                    Serial.println("This is the request:");
+                    Serial.print(HTTP_req);
+                    Serial.println();
+                    */
                     HTTP_req = "";            // finished with request, empty string
                     type = "";
                     command = "";
+                    extension = "";
                     
                     break;
                 }
