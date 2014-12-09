@@ -36,6 +36,10 @@
     01  'kitchen' - Temp Sensor
         A10 = 10
         aget
+
+    02  empty
+        ?
+        ?
  
     03  empty
         ?
@@ -50,7 +54,7 @@
 
 //{pins} {type} {factor}
 String root_table[3][5] = {{"9", "10", "13", "13", "13"},
-    {"aget", "aget", "xxx", "xxx", "dset"}, {"10.24", "7.245", "1", "1"}};
+    {"aget", "aget", "dset", "xxx", "xxx"}, {"10.24", "7.245", "x", "x", "x"}};
 
 
 uint8_t pinLED;
@@ -152,7 +156,7 @@ boolean getDigital(int mod_id) {
     return digitalRead(pin);
 }
 
-int getAnalog(int mod_id){
+float getAnalog(int mod_id){
     int pin;
     float fac;
     char temp_char[8];
@@ -316,13 +320,17 @@ void loop()
                             if (HTTP_type=="d_set"){
                                 //set a digital pin
                                 int state = HTTP_req.substring(HTTP_start + 28, HTTP_start + 29).toInt();
-                                
-                                //Serial.print("New State: ");
-                                //Serial.println(state);
-                                
+                                /*
+                                Serial.print("New State: ");
+                                Serial.println(state);
+                                */
                                 setDigital(module_id, state);
                                 
-                                //Serial.println("d_set detected!");
+                                Serial.println("d_set detected!");
+                                Serial.print("Module_ID: ");
+                                Serial.println(module_id);
+                                Serial.print("New State: ");
+                                Serial.println(state);
                             }
                             else if(HTTP_type=="d_get"){
                                 client.println("Content-Type: text/html");
@@ -333,6 +341,7 @@ void loop()
                                 client.println(getDigital(module_id));
                                 
                                 Serial.println("d_get detected!");
+                                Serial.println(getDigital(module_id));
                             }
                             else if(HTTP_type=="a_get"){
                                 //get the value of an analog pin
@@ -373,7 +382,9 @@ void loop()
                         else{
                             String header = "";
                             if(extension=="png"){
+                                //Serial.println("Extension: png");
                                 header = "Connection: keep-alive\nContent-Type: image/png\n";
+                                //header = "Connection: keep-alive\nContent-Type: image/png\nContent-Length: 129\n";
                             }
                             else if(extension=="jpg"){
                                 header = "Connection: keep-alive\nContent-Type: image/jpg\n";
