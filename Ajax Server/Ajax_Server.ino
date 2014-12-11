@@ -37,17 +37,17 @@
         A10 = 10
         aget
 
-    02  empty
-        ?
-        ?
- 
-    03  empty
-        ?
-        ?
- 
-    04  LED
+    02  LED
         13
         dset
+ 
+    03  empty
+        13
+        ?
+ 
+    04  empty
+        13
+        ?
  
  
  */
@@ -243,11 +243,11 @@ void loop()
                     Serial.print("Command: ");
                     Serial.println(command);
                     */
-                    /*
+                    
                     Serial.println("START -- Full command --- START");
                     Serial.print(HTTP_req);
                     Serial.println("");
-                    */
+                    
                     
                     //int i = command.length() + 2;
                     while (HTTP_req.substring(i,i+1) != "." && HTTP_req.substring(i,i+1) != " ") {
@@ -308,7 +308,7 @@ void loop()
                             
                             int HTTP_start = HTTP_req.indexOf("ajax");
                             String HTTP_type = HTTP_req.substring(HTTP_start + 9, HTTP_start + 14);
-                            int module_id = HTTP_req.substring(HTTP_start + 20, HTTP_start + 22).toInt();
+                            int module_id = HTTP_req.substring(HTTP_start + 21, HTTP_start + 22).toInt();
                             
                             /*
                             Serial.print("HTTP_type: ");
@@ -326,11 +326,16 @@ void loop()
                                 */
                                 setDigital(module_id, state);
                                 
+                                client.println();
+                                client.println();
+                                
+                                /*
                                 Serial.println("d_set detected!");
                                 Serial.print("Module_ID: ");
                                 Serial.println(module_id);
                                 Serial.print("New State: ");
                                 Serial.println(state);
+                                 */
                             }
                             else if(HTTP_type=="d_get"){
                                 client.println("Content-Type: text/html");
@@ -340,8 +345,10 @@ void loop()
                                 //get the state of a digital pin
                                 client.println(getDigital(module_id));
                                 
+                                /*
                                 Serial.println("d_get detected!");
                                 Serial.println(getDigital(module_id));
+                                 */
                             }
                             else if(HTTP_type=="a_get"){
                                 //get the value of an analog pin
@@ -355,7 +362,11 @@ void loop()
                                 
                                 client.println(temp_value);
                                 
-                                //Serial.println("a_get detected!");
+                                /*
+                                Serial.println("a_get detected!");
+                                Serial.print("Module_ID: ");
+                                Serial.println(module_id);
+                                 */
                             }
                             else if(HTTP_type=="a_set"){
                                 //set the value of an analog pin
