@@ -71,14 +71,18 @@ EthernetServer server(80);
 // with the IP address and port you want to use
 // (port 80 is default for HTTP).
 
-String HTTP_req = "";
+String HTTP_req;
+String protocoll;
 String command;
-String type = "";
-String extension = "";
+String c_type;
+String m_id;
+String status;
+String extension;
+String filename;
 char c;
 char b;
-String file_read = "";
-char* filename = "index.htm";
+String file_read;
+char* index_filename = "index.htm";
 File myFile;
 
 
@@ -125,27 +129,27 @@ void setup()
     
     //load webpage from SD-card
     while (!SD.begin(4)) { //select CS-pin
-        Serial.println("initialization failed!");
+        Serial.println("sd card initialization failed!");
         delay(100);
         //return;
     }
 }
 
 
-void setDigital(int mod_id, int state){
+void setDigital(int mod_id, int status){
     int pin;
     pin = root_table[0][mod_id].toInt();
     //Serial.print("Pin: ");
     //Serial.println(pin);
-    if (state)
+    if (status)
     {
         digitalWrite(pin, HIGH);
-        //Serial.println("State: ON");
+        //Serial.println("Status: ON");
     }
     else
     {
         digitalWrite(pin, LOW);
-        //Serial.println("State: OFF");
+        //Serial.println("Status: OFF");
     }
 }
 
@@ -244,19 +248,20 @@ void loop()
                     Serial.println(command);
                     */
                     
+                    /*
                     Serial.println("START -- Full command --- START");
                     Serial.print(HTTP_req);
-                    Serial.println("");
-                    
+                    Serial.println();
+                    */
                     
                     //int i = command.length() + 2;
                     while (HTTP_req.substring(i,i+1) != "." && HTTP_req.substring(i,i+1) != " ") {
-                        type += HTTP_req.substring(i,i+1);
+                        protocoll += HTTP_req.substring(i,i+1);
                         i++;
                     }
                     /*
-                    Serial.print("Type: ");
-                    Serial.println(type);
+                    Serial.print("protocoll: ");
+                    Serial.println(protocoll);
                     */
                     
                     if(HTTP_req.substring(i,i+1)=="."){
@@ -273,14 +278,14 @@ void loop()
                         client.println("HTTP/1.1 200 OK");
 
                         
-                        if (type == ""){
+                        if (protocoll == ""){
                             //Serial.println("HTTP command found!");
                             
                             client.println("Content-Type: text/html");
                             client.println("Connection: keep-alive");
                             
                             // send web page
-                            myFile = SD.open(filename, FILE_READ);
+                            myFile = SD.open(index_filename, FILE_READ);
                             
                             // if the file opened okay, read it:
                             if (myFile){
@@ -300,59 +305,79 @@ void loop()
                             
                             client.println();
                         }
-                        else if(type == "ajax") {
+                        else if(protocoll == "ajax") {
                             //Serial.println("AJAX command found!");
 
                             client.println("Connection: keep-alive");
                             //client.println();
                             
-                            int HTTP_start = HTTP_req.indexOf("ajax");
-                            String HTTP_type = HTTP_req.substring(HTTP_start + 9, HTTP_start + 14);
-                            int module_id = HTTP_req.substring(HTTP_start + 21, HTTP_start + 22).toInt();
+                            //C_TYPE
+                            i = HTTP_req.indexOf("C_TYPE") + 7;
+                            while (HTTP_req.substring(i,i+1) != "&" && HTTP_req.substring(i,i+1) != " ") {
+                                c_type += HTTP_req.substring(i,i+1);
+                                i++;
+                            }
+                            
+                            //M_ID
+                            i = HTTP_req.indexOf("M_ID") + 5;
+                            if (i > 4) {
+                                while (HTTP_req.substring(i,i+1) != "&" && HTTP_req.substring(i,i+1) != " ") {
+                                    m_id += HTTP_req.substring(i,i+1);
+                                    i++;
+                                }
+                            }
+                            
+                            //STATUS
+                            i = HTTP_req.indexOf("STAT") + 5;
+                            //if indexOf finds anything
+                            if (i > 4) {
+                                while (HTTP_req.substring(i,i+1) != "&" && HTTP_req.substring(i,i+1) != " ") {
+                                    status += HTTP_req.substring(i,i+1);
+                                    i++;
+                                }
+                            }
                             
                             /*
-                            Serial.print("HTTP_type: ");
-                            Serial.println(HTTP_type);
+                            Serial.print("Command type: ");
+                            Serial.println(c_type);
                             Serial.print("Module: ");
-                            Serial.println(module_id);
+                            Serial.println(m_id.toInt());
+                            Serial.print("Status: ");
+                            Serial.println(status.toInt());
+                            Serial.println();
                             */
                             
-                            if (HTTP_type=="d_set"){
+                            if (c_type=="d_set"){
                                 //set a digital pin
-                                int state = HTTP_req.substring(HTTP_start + 28, HTTP_start + 29).toInt();
-                                /*
-                                Serial.print("New State: ");
-                                Serial.println(state);
-                                */
-                                setDigital(module_id, state);
+                                setDigital(m_id.toInt(), status.toInt());
                                 
                                 client.println();
                                 client.println();
                                 
                                 /*
                                 Serial.println("d_set detected!");
-                                Serial.print("Module_ID: ");
-                                Serial.println(module_id);
-                                Serial.print("New State: ");
-                                Serial.println(state);
+                                Serial.print("Module ID: ");
+                                Serial.println(m_id);
+                                Serial.print("New Status: ");
+                                Serial.println(status);
                                  */
                             }
-                            else if(HTTP_type=="d_get"){
+                            else if(c_type=="d_get"){
                                 client.println("Content-Type: text/html");
                                 client.println();
                                 client.println();
                                 
-                                //get the state of a digital pin
-                                client.println(getDigital(module_id));
+                                //get the status of a digital pin
+                                client.println(getDigital(m_id.toInt()));
                                 
                                 /*
                                 Serial.println("d_get detected!");
-                                Serial.println(getDigital(module_id));
+                                Serial.println(getDigital(m_id));
                                  */
                             }
-                            else if(HTTP_type=="a_get"){
+                            else if(c_type=="a_get"){
                                 //get the value of an analog pin
-                                float temp_value = getAnalog(module_id);
+                                float temp_value = getAnalog(m_id.toInt());
                                 
                                 //client.print("Content-Length: ");
                                 //client.println(sizeof(temp_value));
@@ -365,11 +390,12 @@ void loop()
                                 /*
                                 Serial.println("a_get detected!");
                                 Serial.print("Module_ID: ");
-                                Serial.println(module_id);
+                                Serial.println(m_id);
                                  */
                             }
-                            else if(HTTP_type=="a_set"){
+                            else if(c_type=="a_set"){
                                 //set the value of an analog pin
+                                /*
                                 int value = 0;
                                 String str_value;
                                 i = 0;
@@ -379,18 +405,48 @@ void loop()
                                     i++;
                                 }
                                 value = str_value.toInt();
+                                */
                                 
-                                setAnalog(module_id, value);
+                                setAnalog(m_id.toInt(), status.toInt());
                                 
                                 //Serial.println("a_set detected!");
                             }
                             else{
-                                Serial.print("HTTP-request Error: type = ");
-                                Serial.println(HTTP_type);
+                                Serial.println("HTTP-request Error:");
+                                Serial.print("PROTOCOLL: ");
+                                Serial.println(protocoll);
+                                /*
+                                Serial.print("C_TYPE: ");
+                                Serial.println(c_type);
+                                Serial.print("M_ID: ");
+                                Serial.println(m_id);
+                                Serial.print("STATUS: ");
+                                Serial.println(status);
+                                Serial.println();
+                                
+                                
+                                Serial.println(HTTP_req);
+                                Serial.println();
+                                */
                             }
                          
                         }
                         else{
+                            //FILENAME
+                            i = HTTP_req.indexOf("GET /") + 5;
+                            while (HTTP_req.substring(i,i+1) != ".") {
+                                filename += HTTP_req.substring(i,i+1);
+                                i++;
+                            }
+                            
+                            /*
+                            Serial.print("Filename: ");
+                            Serial.println(filename);
+                            Serial.print("Extension: ");
+                            Serial.println(extension);
+                            Serial.println();
+                            */
+                            
                             String header = "";
                             if(extension=="png"){
                                 //Serial.println("Extension: png");
@@ -409,9 +465,35 @@ void loop()
                                 Serial.println("ERROR: extension not known!");
                             }
                             
-                            char filename_temp[type.length()+1];
-                            type += HTTP_req.substring(i,i+5);
-                            type.toCharArray(filename_temp, type.length());
+                            char filename_temp[filename.length()+1];
+                            //c_type += HTTP_req.substring(i,i+5);
+                            
+                            /*
+                            Serial.print("Filename before: ");
+                            Serial.println(filename);
+                            */
+                            
+                            filename += ".";
+                            filename += extension;
+                            
+                            filename.toCharArray(filename_temp, filename.length()+1);
+                            
+                            /*
+                            Serial.print("Filename: ");
+                            Serial.println(filename_temp);
+                            Serial.print("Filename length: ");
+                            Serial.println(filename.length());
+                            Serial.println();
+                            
+                            if(SD.exists(filename_temp)) {
+                                Serial.println("Filename exists!");
+                                Serial.println();
+                            }
+                            else {
+                                Serial.println("Filename doesn't exist!");
+                                Serial.println();
+                            }
+                            */
                             
                             // send file
                             myFile = SD.open(filename_temp, FILE_READ);
@@ -419,6 +501,7 @@ void loop()
                             // if the file opened okay, read it:
                             if (myFile){
                                 client.println(header);
+
                                 // read from the file until there's nothing else in it:
                                 while (myFile.available()){
                                     client.print(char(myFile.read()));
@@ -430,6 +513,7 @@ void loop()
                                 myFile.close();
                                 Serial.println("ERROR: File not opened!");
                             }
+                            client.println();
                             client.println();
                         }
                         
@@ -451,10 +535,13 @@ void loop()
                     Serial.println();
                     */
                     HTTP_req = "";            // finished with request, empty string
-                    type = "";
+                    protocoll = "";
                     command = "";
+                    c_type = "";
+                    m_id = "";
+                    status = "";
                     extension = "";
-                    
+                    filename = "";
                     break;
                 }
                 
